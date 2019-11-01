@@ -1,0 +1,9 @@
+instructions.pdf
+# VS 2019 project files
+build/
+.vs
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
