@@ -8,3 +8,5 @@ build/
 out
 gen
 cmake-build-debug
+build
+*.o
