@@ -14,13 +14,15 @@
 #include <time.h>
 #include <math.h>
 
-//#include "simulationModel.h"
-//#include "simulationProcesses.h"
-
 #define ANSI_RED "\x1b[31m"
 #define ANSI_YELLOW "\x1b[33m"
 #define ANSI_GREEN "\x1b[32m"
 #define ANSI_DEFAULT "\x1b[0m"
+
+#include "serverModel.h"
+#include "queueModel.h"
+#include "controller.h"
+
 
 #define DEFAULT_AVG_SERVICE_TIME 2.0
 #define DEFAULT_MAX_SERVERS 4
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Run the simulation with the number of servers/tellers passed as the argument */
-//	simulation (currentServers);
+	simulation (currentServers, avgServiceTime);
 
 }
 
