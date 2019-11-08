@@ -1,3 +1,3 @@
-main: main.o
-	gcc -Wall main.o -o main
-main.o: src/main.c
+proj2: proj2.o
+	gcc -Wall -lm proj2.o -o proj2
+proj2.o: src/proj2.c
