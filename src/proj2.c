@@ -22,12 +22,12 @@
 #define DATA_IN "proj2.dat"
 #define DEFAULT_AVG_SERVICE_TIME 2.0
 #define DEFAULT_MIN_SERVERS 4
-#define DEFAULT_STARTING_SERVERS 4
-#define DEFAULT_MAX_SERVERS 4
+#define DEFAULT_STARTING_SERVERS 7
+#define DEFAULT_MAX_SERVERS 7
 #define MINUTES_PER_SIM 48.0
 #define SIM_TIME_INTERVAL 1.0
 
-void simulation(int, double, FILE *, FILE *, FILE *, FILE *);
+void simulation(int, double, FILE *);
 int getCustomersPerMin(int, int[], int[]);
 int simCustomerArrival(struct Customer *, int, double);
 double serveCustomer(struct Customer *, struct Server *);
@@ -38,11 +38,8 @@ int overrideParameters(int, const char *[], double *, int *, int *, int *);
 
 int main(int argc, char *argv[]) {
 
-	FILE *simResults, *queueLog, *serverLog, *customerLog;
+	FILE *simResults;
 	simResults = fopen("simResults.txt", "w");
-	queueLog = fopen("queueLog.txt", "w");
-	serverLog = fopen("serverLog.txt", "w");
-	customerLog = fopen("customerLog.txt", "w");
 
 	if (simResults == NULL)
 		printf("Error opening simulation results file.");
@@ -77,19 +74,16 @@ int main(int argc, char *argv[]) {
 	int i = 0;
 	numServers = maxServers;
 
-	while (numServers - i >= minServers) {
-		printf("\nSimulation %d -- Number of Tellers: %d", i + 1, numServers);
-		fprintf(simResults, "\nSimulation %d -- Number of Tellers: %d", i + 1, numServers);
+	while (numServers >= minServers) {
+		printf("\nSimulation %d -- Number of Tellers: %d\n", i + 1, numServers);
+		fprintf(simResults, "\nSimulation %d -- Number of Tellers: %d\n", i + 1, numServers);
 		/* Run the simulation with the number of servers/tellers passed as the argument */
-		simulation(numServers, avgServiceTime, simResults, queueLog, customerLog, serverLog);
+		simulation(numServers, avgServiceTime, simResults);
 		i++;
+		numServers--;
 	}
 
-
 	fclose(simResults);
-	fclose(serverLog);
-	fclose(queueLog);
-	fclose(customerLog);
 
 	return 0;
 }
@@ -103,12 +97,7 @@ int main(int argc, char *argv[]) {
  * @param numServers Number of servers that will be modeled in the simulation
  * @param avgServiceTime Mean of servers time to complete service for one customer
  */
-void simulation(int numServers,
-		double avgServiceTime,
-		FILE *simResults,
-		FILE *queueLog,
-		FILE *customerLog,
-		FILE *serverLog) {
+void simulation(int numServers, double avgServiceTime, FILE *simResults) {
 
 	// Gets customer arrival frequency probabilities from data file
 	FILE *fin;
@@ -144,10 +133,10 @@ void simulation(int numServers,
 	int customersServiced = 0, totalCustomers = 0;
 	double cumulativeWaitTime = 0.0, avgWaitTime = 0.0;
 	// Array of all customers wait times during this simulation
-	double *customerWaitTimes;
-	int waitTimeCapacity = 20;
+	//  double *customerWaitTimes;
+  //	int waitTimeCapacity = 20;
 
-	customerWaitTimes = (double *) malloc(sizeof(double) * waitTimeCapacity);
+	// customerWaitTimes = (double *) malloc(sizeof(double) * waitTimeCapacity);
 
 	// Initializes a head node for the queue of customers (head is NOT a customer)
 	struct Customer *queue = newQueue();
@@ -171,27 +160,32 @@ void simulation(int numServers,
 		}
 
 		iterateServersByInterval(servers, SIM_TIME_INTERVAL);
-		printf("[%0.0f]: In Queue: %d\tServers Available: %d\n", currentTime, getQueueSize(queue), getAvailableServers(servers));
 
 		// Move customers to available servers until no more are available or the queue reaches 0.
 		while (getAvailableServers(servers) > 0 && getQueueSize(queue) > 0) {
 			double arrivalTime;
-			customersServiced++;
 
 			// Removes customer from queue and gets their arrival time
 			arrivalTime = serveCustomer(queue, servers);
 
 			if (arrivalTime >= 0.0) {
 				cumulativeWaitTime += currentTime - arrivalTime;
-				printf("\tCustomer being helped - time waited: %0.0f\n", currentTime - arrivalTime);
-				// Save wait time to array and resize array if necessary
-				customerWaitTimes = saveWaitTime(currentTime - arrivalTime,
-						customersServiced,
-						customerWaitTimes,
-						&waitTimeCapacity);
-			}
-		}
+				customersServiced++;
 
+				/*
+				 * This code is causing memory leaks and Seg-Faults and is unnecessary for core functionality.
+				 * It is not being used in this build, but is there for possible future functionality
+				 * (or practice using Valgrind to find out what in the world is wrong with it)
+				 *
+				 * // Save wait time to array and resize array if necessary
+				 * customerWaitTimes = saveWaitTime(currentTime - arrivalTime,
+				 *	customersServiced,
+				 *	customerWaitTimes,
+				 *	&waitTimeCapacity);
+				 */
+			}
+
+		}
 
 		currentTime += SIM_TIME_INTERVAL;
 	} // End of time loop
@@ -199,20 +193,19 @@ void simulation(int numServers,
 	// Report simulation results
 	avgWaitTime = cumulativeWaitTime / (double) customersServiced;
 
-	printf("Results: Customers Helped: %d\tAverage Wait Time: %0.0f\n",
+	printf("Results:\n\tTotal Customers: %d\n\tCustomers Helped: %d\n\tAverage Wait Time: %1.2f\n",
+			totalCustomers,
 			customersServiced,
 			avgWaitTime);
 
-	printCustomerLog(customerLog, customersServiced, avgWaitTime, customerWaitTimes);
-
 	fprintf(simResults, "Number of customers that arrived: %d\n", totalCustomers);
 	fprintf(simResults, "Number of customers helped: %d\n", customersServiced);
-	fprintf(simResults, "Average customer wait time: %0.0f\n", avgWaitTime);
+	fprintf(simResults, "Average customer wait time: %1.2f\n", avgWaitTime);
 	fprintf(simResults, "Number of customers helped by each teller:\n");
 	printServers(servers, simResults);
 
-	free(customerWaitTimes);
-	deleteQueue(queue);
+  //	free(customerWaitTimes);
+	printf("\tCustomers Not Helped by EOB: %d\n", deleteQueue(queue));
 	deleteServerList(servers);
 }
 
@@ -301,7 +294,7 @@ void printCustomerLog(FILE *fout, int customersServiced, double avgWaitTime, dou
 			customersServiced, avgWaitTime);
 
 	for (int i = 0; i < customersServiced; i++)
-		fprintf(fout, "%d:%0.0f, ", i, waitTimes[i]);
+		fprintf(fout, "%d:%1.2f, ", i, waitTimes[i]);
 
 	fprintf(fout, " ]\n");
 }

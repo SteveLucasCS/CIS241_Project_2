@@ -238,7 +238,7 @@ void printServers(struct Server *head, FILE *fout) {
 	while (current != NULL && current->next != NULL) {
 		current = current->next;
 		fprintf(fout,
-				" -> Teller %d: heled %d customers with an average service time of %0.0f minutes.\n",
+				" -> Teller %d: helped %d customers with an average service time of %f minutes.\n",
 				current->serverID, current->numServed, current->serviceTime);
 	}
 }

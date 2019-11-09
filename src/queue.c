@@ -127,7 +127,7 @@ int deleteQueue(struct Customer *head) {
 	int numDeleted = 0;
 
 	while (head != NULL && head->next != NULL) {
-		popCustomer(head->next);
+		popCustomer(head);
 		numDeleted++;
 	}
 
@@ -157,7 +157,7 @@ void printQueue(struct Customer *head, FILE *fout) {
 	fprintf(fout, "[ ");
 	while (current != NULL && current->next != NULL) {
 		current = current->next;
-		fprintf(fout, "%d:%0.0f, ", current->customerID, current->arrivalTime);
+		fprintf(fout, "%d:%1.2f, ", current->customerID, current->arrivalTime);
 	}
 	fprintf(fout, " ]\n");
 }
